@@ -14,7 +14,6 @@ public class Diffuse extends Material {
         Vector3 scatterDirection = record.getNormal().plus(Vector3.randomInUnitSphere());
         scattered.set(new Ray(record.getPoint(), scatterDirection));
         attenuation.set(albedo);
-        //угол < 90
         return true;
     }
 }

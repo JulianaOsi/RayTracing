@@ -14,7 +14,13 @@ public class PPM {
 
     public void createImage(int width, int height, SpheresList spheres) {
         image = new StringBuilder(String.format("P3\n%d %d\n255\n", width, height));
-        Camera camera = new Camera();
+        Camera camera = new Camera(
+                new Vector3(-2,2,3),
+                new Vector3(0,0,-1),
+                new Vector3(0,1,0),
+                40,
+                (double) 16 / 9
+        );
         for (int j = height - 1; j >= 0; --j) {
             for (int i = 0; i < width; ++i) {
                 Vector3 pixelColor = new Vector3(0, 0, 0);

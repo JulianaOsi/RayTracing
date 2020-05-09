@@ -6,11 +6,36 @@ public class Camera {
     Vector3 vertical;
     Vector3 lowerLeftCorner;
 
-    public Camera() {
-        origin = new Vector3(0, 0, 0);
-        horizontal = new Vector3(4, 0, 0);
-        vertical = new Vector3(0, 2.25, 0);
-        lowerLeftCorner = new Vector3(-2, -1, -1);
+    /**
+     * @param lookFrom            - позиция камеры
+     * @param lookAt              - точка, на которую смотрим
+     * @param vup                 - view up
+     * @param verticalFieldOfView - угол поля зрения в градусах
+     * @param aspectRatio         - соотношение сторон
+     */
+    public Camera(
+            Vector3 lookFrom,
+            Vector3 lookAt,
+            Vector3 vup,
+            double verticalFieldOfView,
+            double aspectRatio) {
+        origin = lookFrom;
+        Vector3 u, v, w; //базис
+
+        double theta = Math.toRadians(verticalFieldOfView);
+        double halfHeight = Math.tan(theta / 2);
+        double halfWidth = aspectRatio * halfHeight;
+
+        w = lookFrom.minus(lookAt).unitVector(); //z
+        u = vup.cross(w).unitVector(); //x
+        v = w.cross(u); ///y
+
+        lowerLeftCorner = origin
+                .minus(u.multiply(halfWidth))
+                .minus(v.multiply(halfHeight))
+                .minus(w);
+        horizontal = u.multiply(2 * halfWidth);
+        vertical = v.multiply(2 * halfHeight);
     }
 
     public Ray getRay(double u, double v) {
