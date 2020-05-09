@@ -1,3 +1,5 @@
+package common;
+
 public class Camera {
     Vector3 origin;
     Vector3 horizontal;
@@ -7,7 +9,7 @@ public class Camera {
     public Camera() {
         origin = new Vector3(0, 0, 0);
         horizontal = new Vector3(4, 0, 0);
-        vertical = new Vector3(0, 2, 0);
+        vertical = new Vector3(0, 2.25, 0);
         lowerLeftCorner = new Vector3(-2, -1, -1);
     }
 

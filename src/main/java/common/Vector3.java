@@ -1,3 +1,7 @@
+package common;
+
+import java.util.Random;
+
 public class Vector3 {
     private double x;
     private double y;
@@ -7,6 +11,9 @@ public class Vector3 {
         this.x = x;
         this.y = y;
         this.z = z;
+    }
+
+    public Vector3() {
     }
 
     public Vector3 plus(Vector3 vector3) {
@@ -66,10 +73,36 @@ public class Vector3 {
         return this.divide(this.length());
     }
 
+    public static Vector3 randomInUnitSphere() {
+        while (true) {
+            Vector3 p = random(-1, 1);
+            if (p.length() * p.length() >= 1) continue;
+            return p;
+        }
+    }
+
+    public static Vector3 random(double min, double max) {
+        return new Vector3(
+                randomDouble(min, max),
+                randomDouble(min, max),
+                randomDouble(min, max)
+        );
+    }
+
+    public static double randomDouble(double min, double max) {
+        Random random = new Random();
+        return (max - min) * random.nextDouble() + min;
+    }
+
     public static void print(Vector3 vector3) {
         System.out.println(vector3.x + " " + vector3.y + " " + vector3.z);
     }
 
+    public void set(Vector3 vector3){
+        this.x = vector3.x;
+        this.y = vector3.y;
+        this.z = vector3.z;
+    }
 
     public double getX() {
         return x;

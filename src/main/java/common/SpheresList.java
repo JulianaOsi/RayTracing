@@ -1,3 +1,9 @@
+package common;
+
+import common.HitRecord;
+import common.Ray;
+import shape.Sphere;
+
 import java.util.ArrayList;
 
 public class SpheresList extends ArrayList<Sphere> {

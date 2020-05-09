@@ -1,3 +1,5 @@
+package common;
+
 public class Ray {
     private Vector3 origin;
     private Vector3 direction;
@@ -11,6 +13,9 @@ public class Ray {
         this.direction = direction;
     }
 
+    public Ray() {
+    }
+
     /**
      * P(t) = origin + t * direction
      *
@@ -21,30 +26,32 @@ public class Ray {
         return origin.plus(direction.multiply(t));
     }
 
-    public Vector3 getColor(SpheresList spheres) {
+    public Vector3 getColor(SpheresList spheres, int depth) {
         HitRecord record = new HitRecord();
-        if (spheres.isHitBy(this, 0, Double.POSITIVE_INFINITY, record)) {
-            return record.getNormal().plus(new Vector3(1, 1, 1)).multiply(0.5);
+        // предел количества отражений
+        if (depth <= 0) {
+            return new Vector3(0, 0, 0);
+        }
+
+        if (spheres.isHitBy(this, 0.001, Double.POSITIVE_INFINITY, record)) {
+            Ray scattered = new Ray();
+            Vector3 attenuation = new Vector3();
+            if (record.material.scatter(this, record, attenuation, scattered)) {
+                return scattered.getColor(spheres, depth - 1).multiply(attenuation);
+            }
+            return new Vector3(0, 0, 0);
         }
 
         Vector3 unitDirection = direction.unitVector();
         double t = 0.5 * (unitDirection.getY() + 1);
-        return new Vector3(1,1,1).multiply(1-t).plus(new Vector3(0.5,0.7,1).multiply(t));
+        return new Vector3(1, 1, 1).multiply(1 - t).plus(new Vector3(0.5, 0.7, 1).multiply(t));
 
     }
 
-//    private double hitSphere(Vector3 center, double radius) {
-//        Vector3 oc = origin.minus(center);
-//        double a = direction.dot(direction);
-//        double half_b = oc.dot(direction);
-//        double c = oc.dot(oc) - radius * radius;
-//        double discriminant = half_b * half_b - a * c;
-//        if (discriminant < 0) {
-//            return -1;
-//        } else {
-//            return (-half_b - Math.sqrt(discriminant)) / a;
-//        }
-//    }
+    public void set(Ray ray) {
+        this.origin = ray.origin;
+        this.direction = ray.direction;
+    }
 
     public Vector3 getOrigin() {
         return origin;

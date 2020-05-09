@@ -1,10 +1,19 @@
+package shape;
+
+import common.HitRecord;
+import common.Ray;
+import common.Vector3;
+import material.Material;
+
 public class Sphere {
     private Vector3 center;
     private double radius;
+    private Material material;
 
-    public Sphere(Vector3 center, double radius) {
+    public Sphere(Vector3 center, double radius, Material material) {
         this.center = center;
         this.radius = radius;
+        this.material = material;
     }
 
     public boolean isHitBy(Ray ray, double t_min, double t_max, HitRecord record) {
@@ -24,21 +33,21 @@ public class Sphere {
             if (temp < t_max && temp > t_min) {
                 Vector3 point = ray.getRayPoint(temp);
                 Vector3 outwardNormal = point.minus(center).divide(radius);
-                record.set(point, temp);
+                record.set(point, temp, material);
                 record.setFaceNormal(ray, outwardNormal);
                 return true;
             }
 
             temp = (-half_b + root) / a;
-            if (temp < t_max && temp > t_min){
+            if (temp < t_max && temp > t_min) {
                 Vector3 point = ray.getRayPoint(temp);
                 Vector3 outwardNormal = point.minus(center).divide(radius);
-                record.set(point, temp);
+                record.set(point, temp, material);
                 record.setFaceNormal(ray, outwardNormal);
                 return true;
             }
         }
-        return  false;
+        return false;
     }
 
 }
