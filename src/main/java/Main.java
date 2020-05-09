@@ -7,11 +7,16 @@ import material.Metal;
 import shape.Sphere;
 
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+        //149945286500 без многопоточности
+        //55643382900 с многопоточностью
+        long start = System.nanoTime();
+
         double aspectRatio = (double) 16 / 9;
-        PPM ppm = new PPM();
+        PPM ppm = new PPM(1024, (int) (1024 / aspectRatio));
         Vector3 lookFrom = new Vector3(13, 2, 3);
         Vector3 lookAt = new Vector3(0,0,0);
         Vector3 vup = new Vector3(0,1,0);
@@ -20,8 +25,10 @@ public class Main {
         SpheresList spheres = randomScene();
 
 
-        ppm.createImage(1024, (int) (1024 / aspectRatio), spheres, camera);
-        ppm.writeImage("pic.ppm");
+        StringBuilder image = ppm.createImage(spheres, camera);
+        ppm.writeImage("pic.ppm", image);
+
+        System.out.println(System.nanoTime()-start);
     }
 
     private static SpheresList randomScene() {

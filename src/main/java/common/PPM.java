@@ -1,40 +1,71 @@
 package common;
 
+import javafx.concurrent.Task;
+import javafx.util.Pair;
 import me.tongfei.progressbar.ProgressBar;
 import me.tongfei.progressbar.ProgressBarStyle;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
-import java.util.logging.Logger;
+import java.util.concurrent.*;
 
 public class PPM {
-
     private final int MAX_DEPTH = 50;
-    private StringBuilder image;
-    private static Logger log = Logger.getLogger(PPM.class.getName());
     private int samplesPerPixel = 100;
+    final private int width;
+    final private int height;
+    private ProgressBar pb;
 
-    public void createImage(int width, int height, SpheresList spheres, Camera camera) {
-        image = new StringBuilder(String.format("P3\n%d %d\n255\n", width, height));
+    public PPM(int width, int height) {
+        this.width = width;
+        this.height = height;
+        pb = new ProgressBar("Render", width * height, ProgressBarStyle.ASCII);
+    }
 
-        ProgressBar pb = new ProgressBar("Render", width * height, ProgressBarStyle.ASCII);
+    public StringBuilder createImage(SpheresList spheres, Camera camera) throws InterruptedException, ExecutionException {
+        StringBuilder image = new StringBuilder(String.format("P3\n%d %d\n255\n", width, height));
+        ExecutorService exec = Executors.newFixedThreadPool(16);
+
+        List<Future<StringBuilder>> futures = new ArrayList<>();
 
         for (int j = height - 1; j >= 0; --j) {
-            for (int i = 0; i < width; ++i) {
-                pb.step();
-                Vector3 pixelColor = new Vector3(0, 0, 0);
-                for (int s = 0; s < samplesPerPixel; ++s) {
-                    double u = (i + new Random().nextDouble()) / (width - 1);
-                    double v = (j + new Random().nextDouble()) / (height - 1);
-                    Ray ray = camera.getRay(u, v);
-                    pixelColor = pixelColor.plus(ray.getColor(spheres, MAX_DEPTH));
-                }
-                writePixelColor(pixelColor);
+            Partitioner partitioner = new Partitioner(width, 16); // разделитель строки пикселей
+            int finalJ = j;
+            List<Callable<StringBuilder>> renderRowCall = new ArrayList<>(); // вызовы рендера каждой части строки пикселей
+            for (int k = 0; k < 16; k++) {
+                Pair<Integer, Integer> pair = partitioner.next();
+                renderRowCall.add(() -> renderRow(pair.getKey(), pair.getValue(), camera, spheres, finalJ));
             }
+            // параллельный рендеринг строки пикселей
+            futures.addAll(exec.invokeAll(renderRowCall));
         }
-        log.info("image successfully created");
+        exec.shutdown();
+        for (Future<StringBuilder> future : futures) {
+            image.append(future.get());
+        }
+
         pb.close();
+        return image;
+    }
+
+    private StringBuilder renderRow(int start, int end, Camera camera, SpheresList spheres, int j) {
+        StringBuilder image = new StringBuilder();
+        for (int i = start; i < end; ++i) {
+            pb.step();
+            Vector3 pixelColor = new Vector3(0, 0, 0);
+            for (int s = 0; s < samplesPerPixel; ++s) {
+                double u = (i + new Random().nextDouble()) / (width - 1);
+                double v = (j + new Random().nextDouble()) / (height - 1);
+                Ray ray = camera.getRay(u, v);
+                pixelColor = pixelColor.plus(ray.getColor(spheres, MAX_DEPTH));
+            }
+            writePixelColor(pixelColor, image);
+        }
+        return image;
     }
 
     private double clamp(double x, double min, double max) {
@@ -43,16 +74,15 @@ public class PPM {
         return x;
     }
 
-    public void writeImage(String filename) {
+    public void writeImage(String filename, StringBuilder image) {
         try (FileWriter writer = new FileWriter(filename)) {
             writer.write(String.valueOf(image));
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }
-        log.info("image successfully write");
     }
 
-    private void writePixelColor(Vector3 color) {
+    private void writePixelColor(Vector3 color, StringBuilder image) {
         double r = color.getX();
         double g = color.getY();
         double b = color.getZ();
