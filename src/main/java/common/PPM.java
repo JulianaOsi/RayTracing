@@ -1,5 +1,8 @@
 package common;
 
+import me.tongfei.progressbar.ProgressBar;
+import me.tongfei.progressbar.ProgressBarStyle;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Random;
@@ -12,17 +15,14 @@ public class PPM {
     private static Logger log = Logger.getLogger(PPM.class.getName());
     private int samplesPerPixel = 100;
 
-    public void createImage(int width, int height, SpheresList spheres) {
+    public void createImage(int width, int height, SpheresList spheres, Camera camera) {
         image = new StringBuilder(String.format("P3\n%d %d\n255\n", width, height));
-        Camera camera = new Camera(
-                new Vector3(-2,2,3),
-                new Vector3(0,0,-1),
-                new Vector3(0,1,0),
-                40,
-                (double) 16 / 9
-        );
+
+        ProgressBar pb = new ProgressBar("Render", width * height, ProgressBarStyle.ASCII);
+
         for (int j = height - 1; j >= 0; --j) {
             for (int i = 0; i < width; ++i) {
+                pb.step();
                 Vector3 pixelColor = new Vector3(0, 0, 0);
                 for (int s = 0; s < samplesPerPixel; ++s) {
                     double u = (i + new Random().nextDouble()) / (width - 1);
@@ -34,6 +34,7 @@ public class PPM {
             }
         }
         log.info("image successfully created");
+        pb.close();
     }
 
     private double clamp(double x, double min, double max) {

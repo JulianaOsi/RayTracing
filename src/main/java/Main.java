@@ -1,3 +1,4 @@
+import common.Camera;
 import common.PPM;
 import common.SpheresList;
 import common.Vector3;
@@ -5,29 +6,71 @@ import material.Diffuse;
 import material.Metal;
 import shape.Sphere;
 
+import java.util.Random;
+
 public class Main {
     public static void main(String[] args) {
         double aspectRatio = (double) 16 / 9;
+        PPM ppm = new PPM();
+        Vector3 lookFrom = new Vector3(13, 2, 3);
+        Vector3 lookAt = new Vector3(0,0,0);
+        Vector3 vup = new Vector3(0,1,0);
 
+        Camera camera = new Camera(lookFrom, lookAt, vup, 20, aspectRatio);
+        SpheresList spheres = randomScene();
+
+
+        ppm.createImage(1024, (int) (1024 / aspectRatio), spheres, camera);
+        ppm.writeImage("pic.ppm");
+    }
+
+    private static SpheresList randomScene() {
         SpheresList spheres = new SpheresList();
 
-        Vector3 silver = new Vector3(0.8, 0.8, 0.8);
-        Vector3 pink = new Vector3(0.7, 0.3, 0.3);
-        Vector3 violet = new Vector3(0.41, 0.26, 0.6);
-        Vector3 green = new Vector3(0.2, 0.7, 0.2);
+        Vector3 gray = new Vector3(0.5, 0.5, 0.5);
+        spheres.add(new Sphere(
+                new Vector3(0, -1000, 0),
+                1000,
+                new Diffuse(gray)
+        ));
+        for (int a = -8; a < 8; a++) {
+            for (int b = -4; b < 4; b++) {
+                Random random = new Random();
+                double chooseMaterial = random.nextDouble();
+                Vector3 center = new Vector3(a + 0.9 * random.nextDouble(), 0.2, b + 0.9 * random.nextDouble());
+                if (center.minus(new Vector3(4, 0.2, 0)).length() > 0.9) {
+                    if (chooseMaterial < 0.7) { //diffuse
+                        Vector3 albedo = Vector3.random(0, 1).multiply(Vector3.random(0, 1));
+                        spheres.add(new Sphere(
+                                center,
+                                0.2,
+                                new Diffuse(albedo)
+                        ));
+                    } else { //metal
+                        Vector3 albedo = Vector3.random(0.5, 1);
+                        double fuzz = Vector3.randomDouble(0, 0.5);
+                        spheres.add(new Sphere(
+                                center,
+                                0.2,
+                                new Metal(albedo, fuzz)
+                        ));
+                    }
+                }
+            }
+        }
 
-        Diffuse pinkDiffuse = new Diffuse(pink);
-        Diffuse greenDiffuse = new Diffuse(green);
-        Metal silverMetal = new Metal(silver, 0.1);
-        Metal blueMetal = new Metal(violet, 0.5);
+        spheres.add(new Sphere(
+                new Vector3(0, 1, 0),
+                1,
+                new Diffuse(new Vector3(0.4, 0.2, 0.1))
+        ));
 
-        spheres.add(new Sphere(new common.Vector3(0, 0, -1), 0.5, silverMetal));
-        spheres.add(new Sphere(new common.Vector3(-0.8, -0.3, -0.7), 0.2, blueMetal));
-        spheres.add(new Sphere(new common.Vector3(0, -100.5, -1), 100, greenDiffuse));
-        spheres.add(new Sphere(new common.Vector3(1, 0, -1), 0.5, pinkDiffuse));
+        spheres.add(new Sphere(
+                new Vector3(4, 1, 0),
+                1,
+                new Metal(new Vector3(0.7, 0.6, 0.5), 0)
+        ));
 
-        PPM ppm = new PPM();
-        ppm.createImage(384, (int) (384 / aspectRatio), spheres);
-        ppm.writeImage("pic.ppm");
+        return spheres;
     }
 }
